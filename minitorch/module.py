@@ -44,7 +44,8 @@ class Module:
         for name, param in self.__dict__["_parameters"].items():
             res.append((name, param))
         for name, module in self.__dict__["_modules"].items():
-            res.extend(module.named_parameters())
+            for mod_name, mod_param in module.named_parameters():
+                res.append((name + "." + mod_name, mod_param))
         return res
 
     def parameters(self):

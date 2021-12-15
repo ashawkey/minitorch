@@ -1,3 +1,6 @@
+from numpy.lib.arraysetops import isin
+
+
 variable_count = 1
 
 
@@ -229,6 +232,7 @@ class FunctionBase:
 
         """
         # Go through the variables to see if any needs grad.
+        # kiui: also unwrap all variables to raw values.
         raw_vals = []
         need_grad = False
         for v in vals:
@@ -273,9 +277,17 @@ class FunctionBase:
         """
         # Tip: Note when implementing this function that
         # cls.backward may return either a value or a tuple.
-        # TODO: Implement for Task 1.3.
-        raise NotImplementedError('Need to implement for Task 1.3')
 
+        res = []
+        out = wrap_tuple(cls.backward(ctx, d_output))
+        for i, v in enumerate(inputs):
+            if isinstance(v, Variable):
+                if is_constant(v):
+                    continue
+                else:
+                    res.append((v, out[i]))
+        return res
+        
 
 # Algorithms for backpropagation
 

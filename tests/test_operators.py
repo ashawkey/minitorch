@@ -106,9 +106,9 @@ def test_sigmoid(a):
     """
     assert sigmoid(a) >= 0.0
     assert sigmoid(a) <= 1.0
-    assert sigmoid(-a) == 1.0 - sigmoid(a)
-    assert sigmoid(0.5) == 0
-    assert sigmoid(a) > sigmoid(a - 1.0)
+    assert_close(sigmoid(-a), 1.0 - sigmoid(a))
+    assert_close(sigmoid(0), 0.5)
+    assert sigmoid(a) >= sigmoid(a - 0.1)
 
 
 # TODO
@@ -137,7 +137,7 @@ def test_distribute(a, b, c):
     Write a test that ensures that your operators distribute, i.e.
     :math:`z \times (x + y) = z \times x + z \times y`
     """
-    assert mul(a, add(b, c)) == mul(a, b) + mul(a, c)
+    assert_close(mul(a, add(b, c)), mul(a, b) + mul(a, c))
 
 
 # ## Task 0.3  - Higher-order functions
