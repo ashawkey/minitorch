@@ -193,8 +193,8 @@ class History:
         Returns:
             list of numbers : a derivative with respect to `inputs`
         """
-        # TODO: Implement for Task 1.4.
-        raise NotImplementedError('Need to implement for Task 1.4')
+        out = self.last_fn.chain_rule(self.ctx, self.inputs, d_output)
+        return out
 
 
 class FunctionBase:
@@ -307,8 +307,48 @@ def topological_sort(variable):
         list of Variables : Non-constant Variables in topological order
                             starting from the right.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+    G = {}
+    inds = {}
+    id2var = {}
+    visited = set()
+    # build the graph
+    queue = [variable.unique_id]
+    visited.add(variable.unique_id)
+    id2var[variable.unique_id] = variable
+    G[variable.unique_id] = []
+    while len(queue) > 0:
+        v = id2var[queue[0]]
+        queue = queue[1:]
+        inds[v.unique_id] = 0
+        if v.is_leaf():
+            continue
+        for vv in v.history.inputs:
+            if is_constant(vv):
+                continue
+            if vv.unique_id not in G:
+                G[vv.unique_id] = []
+            G[vv.unique_id].append(v.unique_id)
+            inds[v.unique_id] += 1
+            if vv.unique_id not in visited:
+                queue.append(vv.unique_id)
+                visited.add(vv.unique_id)
+                id2var[vv.unique_id] = vv
+    # toposort
+    res = []
+    queue = []
+    for k, v in inds.items():
+        if v == 0:
+            queue.append(k)
+    while len(queue) > 0:
+        v = id2var[queue[0]]
+        queue = queue[1:]
+        res.append(v)
+        for vv in G[v.unique_id]:
+            inds[vv] -= 1
+            if inds[vv] == 0:
+                queue.append(vv)
+    return reversed(res)
+
 
 
 def backpropagate(variable, deriv):
@@ -324,5 +364,17 @@ def backpropagate(variable, deriv):
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+    derivs = {}
+    derivs[variable.unique_id] = deriv
+    variables = topological_sort(variable)
+    for v in variables:
+        if not v.is_leaf():
+            out = v.history.backprop_step(derivs[v.unique_id])
+            for inp, d in out:
+                if inp.unique_id in derivs:
+                    derivs[inp.unique_id] += d
+                else:
+                    derivs[inp.unique_id] = d
+        else:
+            v.accumulate_derivative(derivs[v.unique_id])
+
