@@ -1,6 +1,6 @@
 import random
 from .operators import prod
-from numpy import array, float64, ndarray
+from numpy import array, float64, ndarray, arange
 import numba
 
 MAX_DIMS = 32
@@ -23,9 +23,11 @@ def index_to_position(index, strides):
     Returns:
         int : position in storage
     """
+    ordinal = 0
+    for i, s in zip(index, strides):
+        ordinal += i * s
+    return ordinal
 
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError('Need to implement for Task 2.1')
 
 
 def to_index(ordinal, shape, out_index):
@@ -44,9 +46,11 @@ def to_index(ordinal, shape, out_index):
       None : Fills in `out_index`.
 
     """
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError('Need to implement for Task 2.1')
-
+    i = len(shape) - 1
+    while i >= 0:
+        out_index[i] = ordinal % shape[i]
+        ordinal = ordinal // shape[i]
+        i -= 1
 
 def broadcast_index(big_index, big_shape, shape, out_index):
     """
@@ -65,8 +69,19 @@ def broadcast_index(big_index, big_shape, shape, out_index):
     Returns:
         None : Fills in `out_index`.
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError('Need to implement for Task 2.2')
+    # kiui: no test is given for this function...
+
+    # assert broadcast-able ?
+    i1 = len(big_shape) - 1
+    i2 = len(shape) - 1
+    while i2 >= 0:
+        if shape[i2] == 1:
+            out_index[i2] = 0
+        else:
+            out_index[i2] = big_index[i1]
+        i2 -= 1
+        i1 -= 2
+
 
 
 def shape_broadcast(shape1, shape2):
@@ -83,8 +98,28 @@ def shape_broadcast(shape1, shape2):
     Raises:
         IndexingError : if cannot broadcast
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError('Need to implement for Task 2.2')
+
+    # R1: dimension of size 1 can be copied n times
+    # R2: extra dimensions of size 1 can be added on the left side of the shape.
+    i1 = len(shape1) - 1
+    i2 = len(shape2) - 1
+    shape = []
+    while i1 >= 0 or i2 >= 0:
+        if i1 < 0:
+            shape.append(shape2[i2])
+        elif i2 < 0:
+            shape.append(shape1[i1])
+        elif shape1[i1] == 1:
+            shape.append(shape2[i2])
+        elif shape2[i2] == 1:
+            shape.append(shape1[i1])
+        elif shape1[i1] == shape2[i2]:
+            shape.append(shape1[i1])
+        else:
+            raise IndexingError
+        i2 -= 1
+        i1 -= 1
+    return tuple(reversed(shape))
 
 
 def strides_from_shape(shape):
@@ -159,6 +194,8 @@ class TensorData:
         return index_to_position(array(index), self._strides)
 
     def indices(self):
+        # kiui: iterator on all elements' index. 
+        # e.g., for array of shape [2, 3], yield (0,0) --> (0,1) --> (0,2) --> (1,0) --> (1,1) --> (1,2)
         lshape = array(self.shape)
         out_index = array(self.shape)
         for i in range(self.size):
@@ -191,8 +228,13 @@ class TensorData:
             range(len(self.shape))
         ), f"Must give a position to each dimension. Shape: {self.shape} Order: {order}"
 
-        # TODO: Implement for Task 2.1.
-        raise NotImplementedError('Need to implement for Task 2.1')
+        # kiui: just reorder both shape and strides!
+        shape = tuple(self._shape[array(order)]) # _shape is array, shape is tuple
+        strides = tuple(self._strides[array(order)])
+        
+        # return a new instance.
+        return TensorData(self._storage, shape, strides)
+
 
     def to_string(self):
         s = ""
