@@ -1,6 +1,6 @@
 import random
 from .operators import prod
-from numpy import array, float64, ndarray, arange
+from numpy import array, float64, ndarray
 import numba
 
 MAX_DIMS = 32
@@ -80,7 +80,7 @@ def broadcast_index(big_index, big_shape, shape, out_index):
         else:
             out_index[i2] = big_index[i1]
         i2 -= 1
-        i1 -= 2
+        i1 -= 1
 
 
 
